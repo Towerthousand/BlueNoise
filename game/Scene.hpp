@@ -23,7 +23,7 @@ class Scene final : public GameObject {
         int gridNoiseOctaves = 2;
         vec2i offset = vec2i(0);
 
-        MeshBatched quad;
+        MeshIndexed quad;
         ShaderProgram program;
         Texture2D tex;
         Noise n[4];

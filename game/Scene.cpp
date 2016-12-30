@@ -28,20 +28,19 @@ Scene::Scene() {
             vec2f t;
     };
     std::vector<Vert> data = {
-        {vec3f(1, -1, 0), vec2f(1, 0)},
-        {vec3f(1, 1, 0), vec2f(1)},
-        {vec3f(-1, 1, 0), vec2f(0, 1)},
+        {vec3f( 1, -1, 0), vec2f(1, 0)},
+        {vec3f( 1,  1, 0), vec2f(1)},
+        {vec3f(-1,  1, 0), vec2f(0, 1)},
         {vec3f(-1, -1, 0), vec2f(0)},
-        {vec3f(1, -1, 0), vec2f(1, 0)},
-        {vec3f(-1, 1, 0), vec2f(0, 1)}
     };
     std::vector<unsigned int> indexes = {
         0, 1, 2, 3, 0, 2
     };
-    quad = MeshBatched(Vertex::Format(elems));
+    quad = MeshIndexed(Vertex::Format(elems));
+    quad.setIndexData(&indexes[0], indexes.size());
     quad.setVertexData(&data[0], data.size());
     program = ShaderProgram(Storage::openAsset("shaders/tex.vert"),Storage::openAsset("shaders/tex.frag"));
-    tex = Texture2D(vec2ui(200,200), TextureFormat::RGBA8);
+    tex = Texture2D(vec2ui(Window::getInstance()->getSize().x/2,Window::getInstance()->getSize().y/2), TextureFormat::RGBA8);
     tex.setFilter(GL_NEAREST, GL_NEAREST);
     n[0].seed(654234590092); //gridsize
     n[0].min = 0.0f;
@@ -73,8 +72,8 @@ void Scene::update(float deltaTime) {
     bool redraw = false;
     if(Mouse::pressed(Mouse::Left)) {
         if(!p->isShown()) {
-            offset.x += Mouse::movement().y*0.1;
-            offset.y -= Mouse::movement().x*0.1;
+            offset.x -= Mouse::movement().x*0.1;
+            offset.y += Mouse::movement().y*0.1;
         }
         redraw = true;
     }
@@ -84,14 +83,12 @@ void Scene::update(float deltaTime) {
 void Scene::draw() const {
     GL_ASSERT(glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT));
     program.uniform("tex")->set(tex);
-    MeshBatched::startBatch();
-    quad.drawBatched(program);
-    MeshBatched::endBatch();
+    quad.draw(program);
 }
 
 void Scene::genTexData() {
     vec2ui size = tex.getSize();
-    vec4uc pixels[size.x][size.y];
+    vec4uc pixels[size.y][size.x];
     n[0].scale = gridNoiseScale;
     n[1].min = minPower;
     n[1].max = maxPower;
@@ -100,7 +97,7 @@ void Scene::genTexData() {
     n[3].scale = dropScale;
     for(unsigned int i = 0; i < size.x; ++i)
         for(unsigned int j = 0; j < size.y; ++j)
-            pixels[i][j] = vec4uc(vec3uc(5), 255);
+            pixels[j][i] = vec4uc(vec3uc(5), 255);
     for(int i = -32; i < int(size.x)+32; ++i)
         for(int j = -32; j < int(size.y)+32; ++j) {
             vec2i c = vec2i(i,j) + offset;
@@ -109,7 +106,7 @@ void Scene::genTexData() {
             vec2f disp = vec2f(n[1].get(c.x,c.y)*gridsize-1, n[2].get(c.x,c.y)*gridsize-1);
             vec2i p = c - offset + vec2i(disp);
             if(p.x >= 0 && p.x < int(size.x) && p.y >= 0 && p.y < int(size.y))
-                pixels[p.x][p.y] = vec4uc(255);
+                pixels[p.y][p.x] = vec4uc(255);
         }
     tex.setData(&pixels[0][0]);
 }
