@@ -20,4 +20,6 @@ void MyProfiler::renderCustomInterface() const {
     ImGui::End();
     maxPower = glm::max(minPower,maxPower);
     minPower = glm::min(minPower,maxPower);
+    maxGridSize = glm::max(minGridSize,maxGridSize);
+    minGridSize = glm::min(minGridSize,maxGridSize);
 }
